@@ -1,3 +1,9 @@
+/**
+ * NOTE: this file is no longer read by the running site — listings now
+ * come from Supabase (see src/hooks/useProperties.ts). It's kept as the
+ * source the seed data in supabase/seed.sql was generated from, and as a
+ * quick reference for the Property shape with realistic example values.
+ */
 import type { Property } from '@/types/property';
 import { img } from './images';
 

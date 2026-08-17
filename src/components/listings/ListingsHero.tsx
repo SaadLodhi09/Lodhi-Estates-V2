@@ -2,9 +2,8 @@ import { motion } from 'framer-motion';
 import { Container } from '@/components/layout/Container';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { img } from '@/data/images';
-import { properties } from '@/data/properties';
 
-export function ListingsHero() {
+export function ListingsHero({ count }: { count?: number }) {
   return (
     <section className="relative flex h-[64vh] min-h-[480px] w-full items-end overflow-hidden bg-ink">
       <motion.img
@@ -19,7 +18,9 @@ export function ListingsHero() {
 
       <Container className="relative pb-16">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 0.8 }}>
-          <Eyebrow tone="paper">{properties.length} Residences Currently Represented</Eyebrow>
+          <Eyebrow tone="paper">
+            {count !== undefined ? `${count} Residences Currently Represented` : 'The Current Collection'}
+          </Eyebrow>
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}

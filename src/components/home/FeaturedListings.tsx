@@ -3,10 +3,13 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
 import { ListingCard } from '@/components/listings/ListingCard';
-import { getFeaturedProperties } from '@/data/properties';
+import { ListingCardSkeleton } from '@/components/listings/ListingCardSkeleton';
+import { useFeaturedProperties } from '@/hooks/useProperties';
 
 export function FeaturedListings() {
-  const featured = getFeaturedProperties();
+  const { data: featured, isLoading, isError } = useFeaturedProperties();
+
+  if (isError) return null;
 
   return (
     <section className="bg-mist py-28 md:py-36">
@@ -30,9 +33,12 @@ export function FeaturedListings() {
         </div>
 
         <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
-          {featured.map((property, i) => (
-            <ListingCard key={property.id} property={property} index={i} />
-          ))}
+          {isLoading &&
+            Array.from({ length: 3 }).map((_, i) => <ListingCardSkeleton key={i} />)}
+          {!isLoading &&
+            featured?.map((property, i) => (
+              <ListingCard key={property.id} property={property} index={i} />
+            ))}
         </div>
       </Container>
     </section>

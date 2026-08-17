@@ -5,11 +5,12 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { SplitHeadline } from '@/components/ui/SplitHeadline';
 import { SpecTag } from '@/components/ui/SpecTag';
 import { img } from '@/data/images';
-import { getFeaturedProperties } from '@/data/properties';
+import { useFeaturedProperties } from '@/hooks/useProperties';
 import { formatPrice } from '@/lib/utils';
 
 export function Hero() {
-  const feature = getFeaturedProperties()[0];
+  const { data: featured } = useFeaturedProperties();
+  const feature = featured?.[0];
 
   return (
     <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden bg-ink">

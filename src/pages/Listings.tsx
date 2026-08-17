@@ -7,14 +7,16 @@ import {
   type SortOption,
 } from '@/components/listings/ListingFilters';
 import { ListingGrid } from '@/components/listings/ListingGrid';
-import { properties } from '@/data/properties';
+import { ListingCardSkeleton } from '@/components/listings/ListingCardSkeleton';
+import { useProperties } from '@/hooks/useProperties';
 
 export default function Listings() {
+  const { data: properties, isLoading, isError } = useProperties();
   const [activeType, setActiveType] = useState<PropertyTypeFilter>('All');
   const [sort, setSort] = useState<SortOption>('newest');
 
   const filtered = useMemo(() => {
-    let list = properties;
+    let list = properties ?? [];
 
     if (activeType !== 'All') {
       list = list.filter((property) => property.type === activeType);
@@ -27,11 +29,11 @@ export default function Listings() {
     });
 
     return list;
-  }, [activeType, sort]);
+  }, [properties, activeType, sort]);
 
   return (
     <>
-      <ListingsHero />
+      <ListingsHero count={properties?.length} />
       <section className="bg-paper py-20 md:py-28">
         <Container>
           <ListingFilters
@@ -41,7 +43,22 @@ export default function Listings() {
             onSortChange={setSort}
             resultCount={filtered.length}
           />
-          <ListingGrid properties={filtered} />
+
+          {isError && (
+            <p className="mt-16 text-center text-ink/50">
+              Listings couldn&rsquo;t be loaded right now — please try again shortly.
+            </p>
+          )}
+
+          {isLoading && (
+            <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ListingCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && !isError && <ListingGrid properties={filtered} />}
         </Container>
       </section>
     </>
