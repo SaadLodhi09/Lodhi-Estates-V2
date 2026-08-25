@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.tsbuildinfo
+*.d.ts
+!src/**/*.d.ts
+/vite.config.js
+supabase/.temp
+supabase/.branches
