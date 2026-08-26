@@ -53,20 +53,6 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-6 md:flex">
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className={cn(
-                'border px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest2 transition-colors duration-500',
-                solid
-                  ? 'border-ink text-ink hover:bg-ink hover:text-paper'
-                  : 'border-paper/60 text-paper hover:bg-paper hover:text-ink'
-              )}
-            >
-              Admin Panel
-            </Link>
-          )}
-
           <Link
             to={isAuthenticated ? '/account' : '/account/sign-in'}
             title={isAuthenticated ? (profile?.full_name ?? 'My Account') : 'Sign In'}
@@ -76,7 +62,7 @@ export function Header() {
             )}
           >
             <User size={16} strokeWidth={1.75} />
-            {isAuthenticated ? 'Account' : 'Sign In'}
+            {isAuthenticated ? 'My Account' : 'Account'}
           </Link>
           <Button as="link" to="/contact" variant={solid ? 'solid' : 'outline'} tone={solid ? 'ink' : 'paper'} icon={false}>
             Book a Viewing
@@ -114,21 +100,12 @@ export function Header() {
                   {link.label}
                 </NavLink>
               ))}
-              {isAdmin && (
-                <NavLink
-                  to="/admin"
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) => cn('font-display text-3xl text-ink', isActive && 'text-moss')}
-                >
-                  Admin Panel
-                </NavLink>
-              )}
               <NavLink
                 to={isAuthenticated ? '/account' : '/account/sign-in'}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) => cn('font-display text-3xl text-ink', isActive && 'text-moss')}
               >
-                {isAuthenticated ? 'My Account' : 'Sign In'}
+                {isAuthenticated ? 'My Account' : 'Account'}
               </NavLink>
               <Button as="link" to="/contact" onClick={() => setOpen(false)} className="mt-4 w-fit">
                 Book a Viewing

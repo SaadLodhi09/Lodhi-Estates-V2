@@ -1,6 +1,7 @@
-import { supabase, PROPERTY_IMAGES_BUCKET } from '@/lib/supabase';
+import { supabase, PROPERTY_IMAGES_BUCKET, isSupabaseConfigured } from '@/lib/supabase';
 import type { Property } from '@/types/property';
 import type { PropertyRow, PropertyInsert, PropertyUpdate } from '@/types/database';
+import { properties, getFeaturedProperties, getPropertyById } from '@/data/properties';
 
 function mapRow(row: PropertyRow): Property {
   return {
@@ -26,31 +27,76 @@ function mapRow(row: PropertyRow): Property {
 }
 
 export async function fetchProperties(): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .order('created_at', { ascending: false });
+  if (!isSupabaseConfigured) {
+    return properties;
+  }
 
-  if (error) throw error;
-  return (data ?? []).map(mapRow);
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('[properties] Supabase fetch error, using fallback:', error.message);
+      return properties;
+    }
+    if (!data || data.length === 0) {
+      return properties;
+    }
+    return data.map(mapRow);
+  } catch (err) {
+    console.warn('[properties] Supabase fetch error, using fallback:', err);
+    return properties;
+  }
 }
 
 export async function fetchFeaturedProperties(): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('featured', true)
-    .order('created_at', { ascending: false });
+  if (!isSupabaseConfigured) {
+    return getFeaturedProperties();
+  }
 
-  if (error) throw error;
-  return (data ?? []).map(mapRow);
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('featured', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('[properties] Supabase fetchFeatured error, using fallback:', error.message);
+      return getFeaturedProperties();
+    }
+    if (!data || data.length === 0) {
+      return getFeaturedProperties();
+    }
+    return data.map(mapRow);
+  } catch (err) {
+    console.warn('[properties] Supabase fetchFeatured error, using fallback:', err);
+    return getFeaturedProperties();
+  }
 }
 
 export async function fetchPropertyById(id: string): Promise<Property | null> {
-  const { data, error } = await supabase.from('properties').select('*').eq('id', id).maybeSingle();
+  if (!isSupabaseConfigured) {
+    return getPropertyById(id) ?? null;
+  }
 
-  if (error) throw error;
-  return data ? mapRow(data) : null;
+  try {
+    const { data, error } = await supabase.from('properties').select('*').eq('id', id).maybeSingle();
+
+    if (error) {
+      console.warn('[properties] Supabase fetchPropertyById error, using fallback:', error.message);
+      return getPropertyById(id) ?? null;
+    }
+    if (data) {
+      return mapRow(data);
+    }
+    return getPropertyById(id) ?? null;
+  } catch (err) {
+    console.warn('[properties] Supabase fetchPropertyById error, using fallback:', err);
+    return getPropertyById(id) ?? null;
+  }
 }
 
 /** Form-facing shape for creating/editing a listing from the admin dashboard. */
