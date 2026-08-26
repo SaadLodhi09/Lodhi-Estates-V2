@@ -14,21 +14,6 @@ export interface Inquiry {
   createdAt: string;
 }
 
-const LOCAL_INQUIRIES_KEY = 'le_local_inquiries';
-
-function getLocalInquiries(): Inquiry[] {
-  try {
-    const raw = localStorage.getItem(LOCAL_INQUIRIES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function setLocalInquiries(inquiries: Inquiry[]) {
-  localStorage.setItem(LOCAL_INQUIRIES_KEY, JSON.stringify(inquiries));
-}
-
 function mapRow(row: InquiryRow): Inquiry {
   return {
     id: row.id,
@@ -55,58 +40,44 @@ export interface InquiryFormInput {
 }
 
 export async function submitInquiry(input: InquiryFormInput): Promise<void> {
-  const newInquiry: Inquiry = {
-    id: `inq-${Date.now()}`,
+  if (!isSupabaseConfigured) return;
+
+  const row: InquiryInsert = {
     name: input.name,
     email: input.email,
-    phone: input.phone || '',
-    interest: input.interest || '',
+    phone: input.phone || null,
+    interest: input.interest || null,
     message: input.message,
-    propertyId: input.propertyId ?? null,
-    userId: input.userId ?? null,
-    status: 'new',
-    createdAt: new Date().toISOString(),
+    property_id: input.propertyId ?? null,
+    user_id: input.userId ?? null,
   };
 
-  const list = getLocalInquiries();
-  setLocalInquiries([newInquiry, ...list]);
-
-  if (isSupabaseConfigured) {
-    try {
-      const row: InquiryInsert = {
-        name: input.name,
-        email: input.email,
-        phone: input.phone || null,
-        interest: input.interest || null,
-        message: input.message,
-        property_id: input.propertyId ?? null,
-        user_id: input.userId ?? null,
-      };
-      await supabase.from('inquiries').insert(row);
-    } catch (err) {
-      console.warn('[inquiries] Supabase submit error:', err);
-    }
-  }
+  const { error } = await supabase.from('inquiries').insert(row);
+  if (error) throw error;
 }
 
 export async function fetchInquiries(): Promise<Inquiry[]> {
-  if (!isSupabaseConfigured) {
-    return getLocalInquiries();
-  }
+  if (!isSupabaseConfigured) return [];
 
   try {
-    const { data, error } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-    if (error) return getLocalInquiries();
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('[inquiries] fetch error:', error.message);
+      return [];
+    }
     return (data ?? []).map(mapRow);
-  } catch {
-    return getLocalInquiries();
+  } catch (err) {
+    console.warn('[inquiries] fetch exception:', err);
+    return [];
   }
 }
 
 export async function fetchMyInquiries(userId: string): Promise<Inquiry[]> {
-  if (!isSupabaseConfigured) {
-    return getLocalInquiries().filter((i) => i.userId === userId || i.email === userId);
-  }
+  if (!isSupabaseConfigured) return [];
 
   try {
     const { data, error } = await supabase
@@ -115,35 +86,23 @@ export async function fetchMyInquiries(userId: string): Promise<Inquiry[]> {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) return getLocalInquiries().filter((i) => i.userId === userId);
+    if (error) {
+      console.warn('[inquiries] fetchMy error:', error.message);
+      return [];
+    }
     return (data ?? []).map(mapRow);
-  } catch {
-    return getLocalInquiries().filter((i) => i.userId === userId);
+  } catch (err) {
+    console.warn('[inquiries] fetchMy exception:', err);
+    return [];
   }
 }
 
 export async function updateInquiryStatus(id: string, status: InquiryRow['status']): Promise<void> {
-  const list = getLocalInquiries();
-  setLocalInquiries(list.map((i) => (i.id === id ? { ...i, status } : i)));
-
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.from('inquiries').update({ status }).eq('id', id);
-    } catch (err) {
-      console.warn('[inquiries] Update error:', err);
-    }
-  }
+  const { error } = await supabase.from('inquiries').update({ status }).eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteInquiry(id: string): Promise<void> {
-  const list = getLocalInquiries();
-  setLocalInquiries(list.filter((i) => i.id !== id));
-
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.from('inquiries').delete().eq('id', id);
-    } catch (err) {
-      console.warn('[inquiries] Delete error:', err);
-    }
-  }
+  const { error } = await supabase.from('inquiries').delete().eq('id', id);
+  if (error) throw error;
 }

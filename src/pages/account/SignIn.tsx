@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useLocation, Link } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ const inputClasses =
 export default function SignIn() {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -38,9 +39,11 @@ export default function SignIn() {
     setStatus('submitting');
     try {
       await signIn(parsed.data.email, parsed.data.password);
+      setStatus('idle');
+      navigate('/account', { replace: true });
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Sign in failed.');
+      setErrorMessage(err instanceof Error ? err.message : 'Sign in failed. Please check your credentials.');
     }
   }
 

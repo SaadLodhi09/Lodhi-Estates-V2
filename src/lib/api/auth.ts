@@ -4,6 +4,15 @@ import type { ProfileRow } from '@/types/database';
 
 const LOCAL_SESSION_KEY = 'le_local_auth_session';
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out. Please try again.')), ms)
+    ),
+  ]);
+}
+
 export async function signIn(email: string, password: string): Promise<void> {
   const trimmedEmail = email.trim().toLowerCase();
 
@@ -35,15 +44,12 @@ export async function signIn(email: string, password: string): Promise<void> {
     return;
   }
 
-  // Live Supabase Sign In with timeout
-  const timeoutPromise = new Promise<{ error: Error }>((_, reject) =>
-    setTimeout(() => reject(new Error('Connection timed out. Check your network or Supabase settings.')), 8000)
+  // Live Supabase — 8 second timeout
+  const { error } = await withTimeout(
+    supabase.auth.signInWithPassword({ email: trimmedEmail, password }),
+    8000
   );
-
-  const authPromise = supabase.auth.signInWithPassword({ email: trimmedEmail, password });
-  const result = (await Promise.race([authPromise, timeoutPromise])) as { error: Error | null };
-
-  if (result.error) throw result.error;
+  if (error) throw error;
 }
 
 export interface SignUpParams {
@@ -83,13 +89,14 @@ export async function signUp({ email, password, fullName }: SignUpParams): Promi
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
-    email: trimmedEmail,
-    password,
-    options: {
-      data: { full_name: fullName },
-    },
-  });
+  const { error } = await withTimeout(
+    supabase.auth.signUp({
+      email: trimmedEmail,
+      password,
+      options: { data: { full_name: fullName } },
+    }),
+    8000
+  );
   if (error) throw error;
 }
 
@@ -99,19 +106,20 @@ export async function signOut(): Promise<void> {
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.auth.signOut();
+      await withTimeout(supabase.auth.signOut(), 3000);
     } catch (err) {
-      console.warn('[auth] signOut error', err);
+      console.warn('[auth] signOut error:', err);
     }
   }
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
-  if (!isSupabaseConfigured) {
-    return;
-  }
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/account/reset-password`,
-  });
+  if (!isSupabaseConfigured) return;
+  const { error } = await withTimeout(
+    supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/account/reset-password`,
+    }),
+    5000
+  );
   if (error) throw error;
 }

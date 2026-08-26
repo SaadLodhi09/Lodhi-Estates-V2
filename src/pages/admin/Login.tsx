@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useLocation, Link } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ const inputClasses =
 export default function AdminLogin() {
   const { isAuthenticated, isAdmin, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -40,10 +41,11 @@ export default function AdminLogin() {
 
     try {
       await signIn(email, password);
-      // AuthContext's onAuthStateChange listener will pick up the session and verify admin status
+      setStatus('idle');
+      navigate('/admin', { replace: true });
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Sign in failed.');
+      setErrorMessage(err instanceof Error ? err.message : 'Sign in failed. Please check your credentials.');
     }
   }
 
@@ -92,4 +94,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-

@@ -21,14 +21,18 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 async function loadProfile(userId: string): Promise<ProfileRow | null> {
   if (!isSupabaseConfigured) return null;
   try {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-    if (error) {
-      console.warn('[auth] failed to load profile', error.message);
+    const query = supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+    const timeoutPromise = new Promise<{ data: ProfileRow | null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error('Profile load timed out') }), 3000)
+    );
+    const result = await Promise.race([query, timeoutPromise]);
+    if (result.error) {
+      console.warn('[auth] failed to load profile:', result.error);
       return null;
     }
-    return data;
+    return result.data as ProfileRow | null;
   } catch (err) {
-    console.warn('[auth] failed to load profile exception', err);
+    console.warn('[auth] profile load exception:', err);
     return null;
   }
 }
@@ -98,25 +102,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    // Live Supabase Auth Flow with Timeout Protection
+    // HARD SAFETY NET: no matter what happens, loading MUST become false within 3.5s
+    const safetyTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('[auth] Safety timeout — forcing loading=false');
+        setLoading(false);
+      }
+    }, 3500);
+
+    // Live Supabase Auth Flow
     async function init() {
       try {
-        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null } }), 3500)
+        const timeoutPromise = new Promise<{ data: { session: Session | null }; error: any }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null }, error: null }), 3000)
         );
 
-        const { data } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
+        const sessionResult = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
 
         if (!mounted) return;
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
 
-        if (data.session) {
-          const userProfile = await loadProfile(data.session.user.id);
+        const sess = sessionResult.data.session;
+        setSession(sess);
+        setUser(sess?.user ?? null);
+
+        if (sess) {
+          const userProfile = await loadProfile(sess.user.id);
           if (mounted) setProfile(userProfile);
         }
       } catch (err) {
-        console.warn('[auth] session init error', err);
+        console.warn('[auth] session init error:', err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -124,23 +138,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      if (!mounted) return;
-      setLoading(true);
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      if (nextSession) {
-        const userProfile = await loadProfile(nextSession.user.id);
-        if (mounted) setProfile(userProfile);
-      } else {
-        setProfile(null);
-      }
-      if (mounted) setLoading(false);
-    });
+    let listenerSub: { unsubscribe: () => void } | null = null;
+    try {
+      const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+        if (!mounted) return;
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        if (nextSession) {
+          const userProfile = await loadProfile(nextSession.user.id);
+          if (mounted) setProfile(userProfile);
+        } else {
+          setProfile(null);
+        }
+        if (mounted) setLoading(false);
+      });
+      listenerSub = listener.subscription;
+    } catch (err) {
+      console.warn('[auth] Failed to set up auth listener:', err);
+    }
 
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+      listenerSub?.unsubscribe();
     };
   }, []);
 
