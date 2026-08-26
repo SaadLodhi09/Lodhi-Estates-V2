@@ -5,9 +5,9 @@ import { formatPrice, cn } from '@/lib/utils';
 import { SaveButton } from './SaveButton';
 
 const statusClasses: Record<Property['status'], string> = {
-  Available: 'text-moss',
+  Available: 'text-[#A5C89E]',
   'Under Offer': 'text-brass',
-  Reserved: 'text-stone',
+  Reserved: 'text-stone-light',
 };
 
 export function ListingCard({ property, index = 0 }: { property: Property; index?: number }) {
