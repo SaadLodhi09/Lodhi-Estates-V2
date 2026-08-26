@@ -1,27 +1,54 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
+const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+function isValidSupabaseUrl(url?: string): boolean {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  if (
+    lower.includes('placeholder') ||
+    lower.includes('your-project-ref') ||
+    lower.includes('your_project_ref')
+  ) {
+    return false;
+  }
+  return lower.startsWith('https://') || lower.startsWith('http://');
+}
+
+function isValidSupabaseKey(key?: string): boolean {
+  if (!key) return false;
+  const lower = key.toLowerCase();
+  if (
+    lower.includes('placeholder') ||
+    lower.includes('your-anon') ||
+    lower.includes('your_anon')
+  ) {
+    return false;
+  }
+  return key.length > 20;
+}
+
+export const isSupabaseConfigured = Boolean(
+  isValidSupabaseUrl(rawUrl) && isValidSupabaseKey(rawKey)
+);
 
 if (!isSupabaseConfigured) {
-  // Doesn't throw — the site should still render (with a visible warning
-  // banner, see EnvWarningBanner) rather than white-screen if env vars
-  // aren't set yet. createClient() itself would throw on an empty/invalid
-  // URL, so we fall back to a syntactically valid placeholder — every
-  // request against it will fail loudly (visible in the network tab)
-  // rather than crashing the whole app before it can render.
   console.warn(
-    '[supabase] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are not set. ' +
-      'Copy .env.example to .env.local and fill in your project values — see SETUP.md.'
+    '[supabase] Live Supabase is not configured or placeholder keys detected. Operating in local demo mode with fallback data.'
   );
 }
 
 export const supabase = createClient<Database>(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder-anon-key'
+  isSupabaseConfigured ? rawUrl! : 'https://placeholder.supabase.co',
+  isSupabaseConfigured ? rawKey! : 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: isSupabaseConfigured,
+      autoRefreshToken: isSupabaseConfigured,
+    },
+  }
 );
 
 export const PROPERTY_IMAGES_BUCKET = 'property-images';

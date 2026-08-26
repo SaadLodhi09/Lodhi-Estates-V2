@@ -3,6 +3,23 @@ import type { Property } from '@/types/property';
 import type { PropertyRow, PropertyInsert, PropertyUpdate } from '@/types/database';
 import { properties, getFeaturedProperties, getPropertyById } from '@/data/properties';
 
+const LOCAL_PROPERTIES_KEY = 'le_local_properties_data';
+
+function getLocalProperties(): Property[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_PROPERTIES_KEY);
+    if (!raw) return properties;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : properties;
+  } catch {
+    return properties;
+  }
+}
+
+function setLocalProperties(data: Property[]) {
+  localStorage.setItem(LOCAL_PROPERTIES_KEY, JSON.stringify(data));
+}
+
 function mapRow(row: PropertyRow): Property {
   return {
     id: row.id,
@@ -28,7 +45,7 @@ function mapRow(row: PropertyRow): Property {
 
 export async function fetchProperties(): Promise<Property[]> {
   if (!isSupabaseConfigured) {
-    return properties;
+    return getLocalProperties();
   }
 
   try {
@@ -39,21 +56,21 @@ export async function fetchProperties(): Promise<Property[]> {
 
     if (error) {
       console.warn('[properties] Supabase fetch error, using fallback:', error.message);
-      return properties;
+      return getLocalProperties();
     }
     if (!data || data.length === 0) {
-      return properties;
+      return getLocalProperties();
     }
     return data.map(mapRow);
   } catch (err) {
     console.warn('[properties] Supabase fetch error, using fallback:', err);
-    return properties;
+    return getLocalProperties();
   }
 }
 
 export async function fetchFeaturedProperties(): Promise<Property[]> {
   if (!isSupabaseConfigured) {
-    return getFeaturedProperties();
+    return getLocalProperties().filter((p) => p.featured);
   }
 
   try {
@@ -65,21 +82,21 @@ export async function fetchFeaturedProperties(): Promise<Property[]> {
 
     if (error) {
       console.warn('[properties] Supabase fetchFeatured error, using fallback:', error.message);
-      return getFeaturedProperties();
+      return getLocalProperties().filter((p) => p.featured);
     }
     if (!data || data.length === 0) {
-      return getFeaturedProperties();
+      return getLocalProperties().filter((p) => p.featured);
     }
     return data.map(mapRow);
   } catch (err) {
     console.warn('[properties] Supabase fetchFeatured error, using fallback:', err);
-    return getFeaturedProperties();
+    return getLocalProperties().filter((p) => p.featured);
   }
 }
 
 export async function fetchPropertyById(id: string): Promise<Property | null> {
   if (!isSupabaseConfigured) {
-    return getPropertyById(id) ?? null;
+    return getLocalProperties().find((p) => p.id === id) ?? getPropertyById(id) ?? null;
   }
 
   try {
@@ -87,15 +104,15 @@ export async function fetchPropertyById(id: string): Promise<Property | null> {
 
     if (error) {
       console.warn('[properties] Supabase fetchPropertyById error, using fallback:', error.message);
-      return getPropertyById(id) ?? null;
+      return getLocalProperties().find((p) => p.id === id) ?? getPropertyById(id) ?? null;
     }
     if (data) {
       return mapRow(data);
     }
-    return getPropertyById(id) ?? null;
+    return getLocalProperties().find((p) => p.id === id) ?? getPropertyById(id) ?? null;
   } catch (err) {
     console.warn('[properties] Supabase fetchPropertyById error, using fallback:', err);
-    return getPropertyById(id) ?? null;
+    return getLocalProperties().find((p) => p.id === id) ?? getPropertyById(id) ?? null;
   }
 }
 
@@ -141,27 +158,91 @@ function toInsertRow(input: PropertyFormInput): PropertyInsert {
 }
 
 export async function createProperty(input: PropertyFormInput): Promise<Property> {
-  const { data, error } = await supabase.from('properties').insert(toInsertRow(input)).select().single();
+  if (!isSupabaseConfigured) {
+    const newProperty: Property = {
+      id: `prop-${Date.now()}`,
+      refCode: input.refCode,
+      name: input.name,
+      location: input.location,
+      coordinates: input.coordinates || '',
+      type: input.type,
+      status: input.status,
+      price: input.price,
+      currency: 'PKR',
+      areaSqft: input.areaSqft,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      yearBuilt: input.yearBuilt || 0,
+      architect: input.architect || '',
+      description: input.description || '',
+      image: input.imageUrl || '',
+      gallery: input.galleryUrls || [],
+      featured: input.featured,
+    };
+    const current = getLocalProperties();
+    setLocalProperties([newProperty, ...current]);
+    return newProperty;
+  }
 
+  const { data, error } = await supabase.from('properties').insert(toInsertRow(input)).select().single();
   if (error) throw error;
   return mapRow(data);
 }
 
 export async function updateProperty(id: string, input: PropertyFormInput): Promise<Property> {
+  if (!isSupabaseConfigured) {
+    const current = getLocalProperties();
+    const updated: Property = {
+      id,
+      refCode: input.refCode,
+      name: input.name,
+      location: input.location,
+      coordinates: input.coordinates || '',
+      type: input.type,
+      status: input.status,
+      price: input.price,
+      currency: 'PKR',
+      areaSqft: input.areaSqft,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      yearBuilt: input.yearBuilt || 0,
+      architect: input.architect || '',
+      description: input.description || '',
+      image: input.imageUrl || '',
+      gallery: input.galleryUrls || [],
+      featured: input.featured,
+    };
+    setLocalProperties(current.map((p) => (p.id === id ? updated : p)));
+    return updated;
+  }
+
   const update: PropertyUpdate = toInsertRow(input);
   const { data, error } = await supabase.from('properties').update(update).eq('id', id).select().single();
-
   if (error) throw error;
   return mapRow(data);
 }
 
 export async function deleteProperty(id: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const current = getLocalProperties();
+    setLocalProperties(current.filter((p) => p.id !== id));
+    return;
+  }
+
   const { error } = await supabase.from('properties').delete().eq('id', id);
   if (error) throw error;
 }
 
-/** Uploads an image to the public property-images bucket and returns its public URL. */
+/** Uploads an image to the public property-images bucket or returns data URL in local mode. */
 export async function uploadPropertyImage(file: File): Promise<string> {
+  if (!isSupabaseConfigured) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  }
+
   const extension = file.name.split('.').pop() ?? 'jpg';
   const path = `${crypto.randomUUID()}.${extension}`;
 
