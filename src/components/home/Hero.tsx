@@ -6,17 +6,23 @@ import { SplitHeadline } from '@/components/ui/SplitHeadline';
 import { SpecTag } from '@/components/ui/SpecTag';
 import { img } from '@/data/images';
 import { useFeaturedProperties } from '@/hooks/useProperties';
+import { useSiteContent } from '@/hooks/useSiteContent';
 import { formatPrice } from '@/lib/utils';
 
 export function Hero() {
   const { data: featured } = useFeaturedProperties();
+  const { data: siteContent } = useSiteContent();
   const feature = featured?.[0];
+
+  const hero = siteContent?.hero;
+  const heroImage = hero?.imageUrl || feature?.image || img('exteriorHillside', 2400);
 
   return (
     <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden bg-ink">
       <motion.img
-        src={feature?.image || img('exteriorHillside', 2400)}
-        alt={feature?.name ?? "Concrete and glass residence set beneath an open sky"}
+        key={heroImage}
+        src={heroImage}
+        alt="Lodhi Estates Featured Residence"
         initial={{ scale: 1.14 }}
         animate={{ scale: 1 }}
         transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
@@ -32,11 +38,16 @@ export function Hero() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <Eyebrow tone="paper">Private Residences — Lahore · Islamabad · Karachi</Eyebrow>
+            <Eyebrow tone="paper">
+              {hero?.eyebrow || 'Private Residences — Lahore · Islamabad · Karachi'}
+            </Eyebrow>
           </motion.div>
 
           <h1 className="mt-6 font-display text-display-xl text-paper">
-            <SplitHeadline lines={['Every estate,', 'drawn to scale.']} delay={0.7} />
+            <SplitHeadline
+              lines={[hero?.headline1 || 'Every estate,', hero?.headline2 || 'drawn to scale.']}
+              delay={0.7}
+            />
           </h1>
 
           <motion.p
@@ -45,8 +56,8 @@ export function Hero() {
             transition={{ delay: 1.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="mt-8 max-w-md text-base leading-relaxed text-paper/75 md:max-w-lg md:text-lg"
           >
-            Lodhi Estates represents a small number of private residences each year — chosen for
-            architecture, siting, and light, then documented like the buildings they are.
+            {hero?.description ||
+              'Lodhi Estates represents a small number of private residences each year — chosen for architecture, siting, and light, then documented like the buildings they are.'}
           </motion.p>
 
           <motion.div
@@ -55,11 +66,11 @@ export function Hero() {
             transition={{ delay: 1.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="mt-10 flex flex-wrap items-center gap-5"
           >
-            <Button as="link" to="/listings" tone="paper">
-              View Current Listings
+            <Button as="link" to={hero?.primaryBtnLink || '/listings'} tone="paper">
+              {hero?.primaryBtnText || 'View Current Listings'}
             </Button>
-            <Button as="link" to="/about" variant="ghost" tone="paper">
-              Our Approach
+            <Button as="link" to={hero?.secondaryBtnLink || '/about'} variant="ghost" tone="paper">
+              {hero?.secondaryBtnText || 'Our Approach'}
             </Button>
           </motion.div>
         </Container>

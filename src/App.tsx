@@ -20,6 +20,7 @@ const AdminLogin = lazy(() => import('@/pages/admin/Login'));
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
 const AdminProperties = lazy(() => import('@/pages/admin/PropertiesList'));
 const AdminPropertyEditor = lazy(() => import('@/pages/admin/PropertyEditor'));
+const AdminSiteContent = lazy(() => import('@/pages/admin/SiteContentEditor'));
 const AdminInquiries = lazy(() => import('@/pages/admin/Inquiries'));
 
 function PublicLayout() {
@@ -110,6 +111,16 @@ export default function App() {
           <ProtectedRoute>
             <Suspense fallback={<AdminFallback />}>
               <AdminPropertyEditor mode="edit" />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/content"
+        element={
+          <ProtectedRoute>
+            <Suspense fallback={<AdminFallback />}>
+              <AdminSiteContent />
             </Suspense>
           </ProtectedRoute>
         }

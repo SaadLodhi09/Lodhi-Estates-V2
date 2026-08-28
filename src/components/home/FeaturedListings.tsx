@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/Button';
 import { ListingCard } from '@/components/listings/ListingCard';
 import { ListingCardSkeleton } from '@/components/listings/ListingCardSkeleton';
 import { useFeaturedProperties } from '@/hooks/useProperties';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 export function FeaturedListings() {
   const { data: featured, isLoading, isError } = useFeaturedProperties();
+  const { data: siteContent } = useSiteContent();
 
   if (isError) return null;
+
+  const section = siteContent?.featured;
 
   return (
     <section className="bg-mist py-28 md:py-36">
@@ -17,17 +21,17 @@ export function FeaturedListings() {
         <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div>
             <Reveal>
-              <Eyebrow>Current Collection</Eyebrow>
+              <Eyebrow>{section?.eyebrow || 'Current Collection'}</Eyebrow>
             </Reveal>
             <Reveal delay={0.1}>
               <h2 className="mt-6 max-w-xl font-display text-display-md text-ink">
-                Three residences, open now.
+                {section?.headline || 'Three residences, open now.'}
               </h2>
             </Reveal>
           </div>
           <Reveal delay={0.2}>
-            <Button as="link" to="/listings" variant="outline">
-              View All Listings
+            <Button as="link" to={section?.btnLink || '/listings'} variant="outline">
+              {section?.btnText || 'View All Listings'}
             </Button>
           </Reveal>
         </div>

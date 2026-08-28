@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Mail, LogOut, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Building2, Mail, LayoutTemplate, LogOut, ExternalLink } from 'lucide-react';
 import { signOut } from '@/lib/api/auth';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/properties', label: 'Properties', icon: Building2, end: false },
+  { to: '/admin/content', label: 'Site Content', icon: LayoutTemplate, end: false },
   { to: '/admin/inquiries', label: 'Inquiries', icon: Mail, end: false },
 ];
 
