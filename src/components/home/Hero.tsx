@@ -15,8 +15,8 @@ export function Hero() {
   return (
     <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden bg-ink">
       <motion.img
-        src={img('exteriorHillside', 2400)}
-        alt="Concrete and glass residence set beneath an open sky"
+        src={feature?.image || img('exteriorHillside', 2400)}
+        alt={feature?.name ?? "Concrete and glass residence set beneath an open sky"}
         initial={{ scale: 1.14 }}
         animate={{ scale: 1 }}
         transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}

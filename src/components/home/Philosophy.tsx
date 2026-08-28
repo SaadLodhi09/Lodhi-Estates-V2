@@ -3,8 +3,12 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
 import { img } from '@/data/images';
+import { useProperties } from '@/hooks/useProperties';
 
 export function Philosophy() {
+  const { data: properties } = useProperties();
+  const highlight = properties?.find((p) => p.refCode === 'LE-014') || properties?.[1] || properties?.[0];
+
   return (
     <section className="bg-paper py-28 md:py-36">
       <Container>
@@ -12,13 +16,13 @@ export function Philosophy() {
           <Reveal className="lg:col-span-5 lg:col-start-1" y={32}>
             <div className="relative aspect-[4/5] w-full overflow-hidden">
               <img
-                src={img('interiorWindow', 1400)}
-                alt="Living space with a full-height window onto the garden"
+                src={highlight?.image || img('interiorWindow', 1400)}
+                alt={highlight?.name ?? "Living space with a full-height window onto the garden"}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
               <div className="absolute left-0 top-0 border-b border-r border-paper/30 bg-ink/50 px-4 py-3 font-mono text-[11px] text-paper backdrop-blur-md">
-                LE-014 / DHA Phase 6
+                {highlight ? `${highlight.refCode} / ${highlight.location}` : 'LE-014 / DHA Phase 6'}
               </div>
             </div>
           </Reveal>
