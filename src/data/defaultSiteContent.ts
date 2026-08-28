@@ -8,7 +8,7 @@ export const defaultSiteContent: SiteContent = {
     headline2: 'drawn to scale.',
     description:
       'Lodhi Estates represents a small number of private residences each year — chosen for architecture, siting, and light, then documented like the buildings they are.',
-    imageUrl: img('exteriorHillside', 2400),
+    imageUrl: img('exteriorDusk', 2400),
     primaryBtnText: 'View Current Listings',
     primaryBtnLink: '/listings',
     secondaryBtnText: 'Our Approach',

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchSiteContent, updateSiteContent, resetSiteContent } from '@/lib/api/siteContent';
+import { fetchSiteContent, updateSiteContent, resetSiteContent, getStoredSiteContent } from '@/lib/api/siteContent';
 import type { SiteContent } from '@/types/siteContent';
 
 const CONTENT_QUERY_KEY = ['site-content'] as const;
@@ -25,6 +25,7 @@ export function useSiteContent() {
   return useQuery({
     queryKey: CONTENT_QUERY_KEY,
     queryFn: fetchSiteContent,
+    initialData: getStoredSiteContent,
     staleTime: 10_000,
   });
 }

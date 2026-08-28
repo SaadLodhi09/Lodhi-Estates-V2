@@ -3,6 +3,8 @@ import {
   fetchProperties,
   fetchFeaturedProperties,
   fetchPropertyById,
+  getCachedProperties,
+  getCachedFeaturedProperties,
   createProperty,
   updateProperty,
   deleteProperty,
@@ -16,11 +18,21 @@ const KEYS = {
 };
 
 export function useProperties() {
-  return useQuery({ queryKey: KEYS.all, queryFn: fetchProperties });
+  return useQuery({
+    queryKey: KEYS.all,
+    queryFn: fetchProperties,
+    initialData: getCachedProperties,
+    staleTime: 10_000,
+  });
 }
 
 export function useFeaturedProperties() {
-  return useQuery({ queryKey: KEYS.featured, queryFn: fetchFeaturedProperties });
+  return useQuery({
+    queryKey: KEYS.featured,
+    queryFn: fetchFeaturedProperties,
+    initialData: getCachedFeaturedProperties,
+    staleTime: 10_000,
+  });
 }
 
 export function useProperty(id: string | undefined) {
@@ -28,6 +40,7 @@ export function useProperty(id: string | undefined) {
     queryKey: KEYS.detail(id ?? ''),
     queryFn: () => fetchPropertyById(id as string),
     enabled: Boolean(id),
+    staleTime: 10_000,
   });
 }
 

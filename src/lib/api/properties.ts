@@ -3,6 +3,31 @@ import type { Property } from '@/types/property';
 import type { PropertyRow, PropertyInsert, PropertyUpdate } from '@/types/database';
 import { properties as fallbackProperties, getFeaturedProperties, getPropertyById } from '@/data/properties';
 
+const CACHED_ALL_KEY = 'le_cached_properties';
+const CACHED_FEATURED_KEY = 'le_cached_featured';
+
+export function getCachedProperties(): Property[] {
+  try {
+    const raw = localStorage.getItem(CACHED_ALL_KEY);
+    if (!raw) return fallbackProperties;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallbackProperties;
+  } catch {
+    return fallbackProperties;
+  }
+}
+
+export function getCachedFeaturedProperties(): Property[] {
+  try {
+    const raw = localStorage.getItem(CACHED_FEATURED_KEY);
+    if (!raw) return getFeaturedProperties();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : getFeaturedProperties();
+  } catch {
+    return getFeaturedProperties();
+  }
+}
+
 function mapRow(row: PropertyRow): Property {
   return {
     id: row.id,
@@ -27,7 +52,7 @@ function mapRow(row: PropertyRow): Property {
 }
 
 export async function fetchProperties(): Promise<Property[]> {
-  if (!isSupabaseConfigured) return fallbackProperties;
+  if (!isSupabaseConfigured) return getCachedProperties();
 
   try {
     const query = supabase.from('properties').select('*').order('created_at', { ascending: false });
@@ -38,17 +63,19 @@ export async function fetchProperties(): Promise<Property[]> {
 
     if (result.error || !result.data || result.data.length === 0) {
       if (result.error) console.warn('[properties] fetch error:', result.error);
-      return fallbackProperties;
+      return getCachedProperties();
     }
-    return result.data.map(mapRow);
+    const mapped = result.data.map(mapRow);
+    localStorage.setItem(CACHED_ALL_KEY, JSON.stringify(mapped));
+    return mapped;
   } catch (err) {
     console.warn('[properties] fetch exception:', err);
-    return fallbackProperties;
+    return getCachedProperties();
   }
 }
 
 export async function fetchFeaturedProperties(): Promise<Property[]> {
-  if (!isSupabaseConfigured) return getFeaturedProperties();
+  if (!isSupabaseConfigured) return getCachedFeaturedProperties();
 
   try {
     const query = supabase.from('properties').select('*').eq('featured', true).order('created_at', { ascending: false });
@@ -59,12 +86,14 @@ export async function fetchFeaturedProperties(): Promise<Property[]> {
 
     if (result.error || !result.data || result.data.length === 0) {
       if (result.error) console.warn('[properties] fetchFeatured error:', result.error);
-      return getFeaturedProperties();
+      return getCachedFeaturedProperties();
     }
-    return result.data.map(mapRow);
+    const mapped = result.data.map(mapRow);
+    localStorage.setItem(CACHED_FEATURED_KEY, JSON.stringify(mapped));
+    return mapped;
   } catch (err) {
     console.warn('[properties] fetchFeatured exception:', err);
-    return getFeaturedProperties();
+    return getCachedFeaturedProperties();
   }
 }
 

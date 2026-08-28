@@ -15,14 +15,16 @@ export function Hero() {
   const feature = featured?.[0];
 
   const hero = siteContent?.hero;
-  const heroImage = hero?.imageUrl || feature?.image || img('exteriorHillside', 2400);
+  const heroImage = hero?.imageUrl || feature?.image || img('exteriorDusk', 2400);
 
   return (
     <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden bg-ink">
       <motion.img
-        key={heroImage}
         src={heroImage}
         alt="Lodhi Estates Featured Residence"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
         initial={{ scale: 1.14 }}
         animate={{ scale: 1 }}
         transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
