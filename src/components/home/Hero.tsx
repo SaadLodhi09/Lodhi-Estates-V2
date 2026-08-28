@@ -54,7 +54,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 max-w-md text-base leading-relaxed text-paper/75 md:max-w-lg md:text-lg"
+            className="mt-8 max-w-md text-base leading-relaxed text-paper/75 text-justify md:max-w-lg md:text-lg"
           >
             {hero?.description ||
               'Lodhi Estates represents a small number of private residences each year — chosen for architecture, siting, and light, then documented like the buildings they are.'}

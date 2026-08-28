@@ -110,7 +110,7 @@ export default function PropertyDetail() {
           <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <Reveal>
-                <p className="text-lg leading-relaxed text-ink/70">{property.description}</p>
+                <p className="text-lg leading-relaxed text-ink/70 text-justify">{property.description}</p>
               </Reveal>
 
               {property.gallery.length > 0 && (

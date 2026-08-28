@@ -32,7 +32,7 @@ export function CTABanner() {
             </h2>
           </Reveal>
           <Reveal delay={0.2}>
-            <p className="mt-6 text-base leading-relaxed text-paper/70">
+            <p className="mt-6 text-base leading-relaxed text-paper/70 text-justify">
               {cta?.description ||
                 'A short call is usually enough to know whether we have something worth showing you — or whether we should keep looking on your behalf.'}
             </p>

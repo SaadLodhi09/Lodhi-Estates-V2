@@ -15,7 +15,7 @@ export function Values() {
           {values.map((value, i) => (
             <Reveal key={value.title} delay={i * 0.1}>
               <h3 className="font-display text-2xl text-ink">{value.title}</h3>
-              <p className="mt-4 text-sm leading-relaxed text-ink/65">{value.body}</p>
+              <p className="mt-4 text-sm leading-relaxed text-ink/65 text-justify">{value.body}</p>
             </Reveal>
           ))}
         </div>

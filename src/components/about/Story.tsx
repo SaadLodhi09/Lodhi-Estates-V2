@@ -20,7 +20,7 @@ export function Story() {
           <div className="space-y-6 lg:col-span-7 lg:col-start-6">
             {founderNote.body.map((paragraph, i) => (
               <Reveal key={paragraph.slice(0, 20)} delay={0.15 + i * 0.1}>
-                <p className="text-lg leading-relaxed text-ink/70">{paragraph}</p>
+                <p className="text-lg leading-relaxed text-ink/70 text-justify">{paragraph}</p>
               </Reveal>
             ))}
           </div>

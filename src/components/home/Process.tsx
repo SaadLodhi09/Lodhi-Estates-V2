@@ -22,7 +22,7 @@ export function Process() {
               <div className="border-t border-line pt-6">
                 <span className="font-mono text-sm text-brass">{step.index}</span>
                 <h3 className="mt-4 font-display text-2xl text-ink">{step.title}</h3>
-                <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink/65">{step.body}</p>
+                <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink/65 text-justify">{step.body}</p>
               </div>
             </Reveal>
           ))}

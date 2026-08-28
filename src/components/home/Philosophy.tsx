@@ -42,7 +42,7 @@ export function Philosophy() {
               </h2>
             </Reveal>
             <Reveal delay={0.2}>
-              <p className="mt-8 max-w-lg text-base leading-relaxed text-ink/70">
+              <p className="mt-8 max-w-lg text-base leading-relaxed text-ink/70 text-justify">
                 {philosophy?.description ||
                   'Most listings describe a home the way a spreadsheet would — bedrooms, bathrooms, a price per square foot. We start from the plan: orientation, structure, materials, the decisions an architect made and why. It changes how a house is priced, and it changes who it’s right for.'}
               </p>
